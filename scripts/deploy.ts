@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 async function main() {
   const initialValue = 100;
   const storageFactory = await ethers.getContractFactory("Storage");
-  const storage = await storageFactory.deploy(initialValue);
+  const storage = await storageFactory.deploy();
 
   await storage.deployed();
 
