@@ -7,7 +7,7 @@ contract InitializableImplementation {
     uint256 private value;
     bool private initialized;
 
-    // Implementations can't have a constructor since there is no way that proxies can delegate into this function because is not stored in the bytecode
+    // Implementations constructors are not recognized by proxies since there is no way that proxies can delegate into constructors because they are not stored in the bytecode
     // The solution is to create a one time execution function similar to a constructor
     function initialize(uint256 value_) public {
         if (!initialized){

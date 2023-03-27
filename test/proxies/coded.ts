@@ -3,10 +3,10 @@ import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import { BigNumber, ContractReceipt, ContractTransaction } from "ethers";
-import Implementation from "../../artifacts/contracts/proxies/Type0.Coded/E00.Implementation.sol/Implementation.json"
-import InitializableImplementation from "../../artifacts/contracts/proxies/Type0.Coded/E03.InitializableImplementation.sol/InitializableImplementation.json"
+import Implementation from "../../artifacts/contracts/S0.Proxies/C0. Coded Proxies/E00.Implementation.sol/Implementation.json"
+import InitializableImplementation from "../../artifacts/contracts/S0.Proxies/C0. Coded Proxies/E03.InitializableImplementation.sol/InitializableImplementation.json"
 
-describe("Storage", function () {
+describe("Coded Proxies", function () {
   const otherValue = 1000;
 
   async function deployStorageFixture() {
@@ -41,11 +41,16 @@ describe("Storage", function () {
     await assemblyProxy.upgradeTo(initializableImplementation.address);
     await assemblyProxy.initialize(otherValue);
 
-    return { implementation, simpleProxy, genericProxy, initializableProxy, nonCollisionableProxy, assemblyProxy, owner };
+    let iface = new ethers.utils.Interface(Implementation.abi);
+    const storeCalldata = iface.encodeFunctionData("store", [otherValue])
+    const retrieveCalldata = iface.encodeFunctionData("retrieve")
+
+
+    return { implementation, simpleProxy, genericProxy, initializableProxy, nonCollisionableProxy, assemblyProxy, owner, storeCalldata , retrieveCalldata};
   }
 
   describe("Implementation", function () {
-    it("Should store and retrieve a value ", async function () {
+    it("Should store and retrieve correct value through proxy ", async function () {
       const { implementation } = await loadFixture(deployStorageFixture);
       await implementation.store(otherValue);
       expect(await implementation.callStatic.retrieve()).to.equal(otherValue);
@@ -53,7 +58,7 @@ describe("Storage", function () {
   });
 
   describe("Simple Proxy", function () {
-    it("Should store and retrieve a value", async function () {
+    it("Should store and retrieve correct value through proxy", async function () {
       const { simpleProxy } = await loadFixture(deployStorageFixture);
       await simpleProxy.store(otherValue);
       expect(await simpleProxy.callStatic.retrieve()).to.equal(otherValue);
@@ -61,18 +66,15 @@ describe("Storage", function () {
   });
 
   describe("Generic Proxy", function () {
-    it("Should store and retrieve a value", async function () {
-      const { owner, genericProxy } = await loadFixture(deployStorageFixture);
-      let iface = new ethers.utils.Interface(Implementation.abi);
-      const storeCalldata = iface.encodeFunctionData("store", [otherValue])
+    it("Should store and retrieve correct value through proxy", async function () {
+      const { owner, genericProxy, storeCalldata, retrieveCalldata } = await loadFixture(deployStorageFixture);
       await owner.sendTransaction({
         to: genericProxy.address,
         data: storeCalldata
       })
-      const retrieveCallData = iface.encodeFunctionData("retrieve")
       const value = await owner.call({
         to: genericProxy.address,
-        data: retrieveCallData
+        data: retrieveCalldata
       })
       expect(BigNumber.from(value)).to.equal(otherValue)
     });
@@ -80,48 +82,40 @@ describe("Storage", function () {
 
   describe("Initializable Proxy", function () {
     it("Should retrieve an initialized value", async function () {
-      const { owner, initializableProxy } = await loadFixture(deployStorageFixture);
-      let iface = new ethers.utils.Interface(InitializableImplementation.abi);
-      const retrieveCallData = iface.encodeFunctionData("retrieve")
+      const { owner, initializableProxy, retrieveCalldata } = await loadFixture(deployStorageFixture);
       const value = await owner.call({
         to: initializableProxy.address,
-        data: retrieveCallData
+        data: retrieveCalldata
       })
       expect(BigNumber.from(value)).to.equal(otherValue)
     });
   });
 
   describe("Non collisionable Proxy", function () {
-    it("Should store and retrieve a value", async function () {
-      const { owner, nonCollisionableProxy } = await loadFixture(deployStorageFixture);
-      let iface = new ethers.utils.Interface(Implementation.abi);
-      const storeCalldata = iface.encodeFunctionData("store", [otherValue])
+    it("Should store and retrieve correct value through proxy", async function () {
+      const { owner, nonCollisionableProxy, storeCalldata, retrieveCalldata } = await loadFixture(deployStorageFixture);
       await owner.sendTransaction({
         to: nonCollisionableProxy.address,
         data: storeCalldata
       })
-      const retrieveCallData = iface.encodeFunctionData("retrieve")
       const value = await owner.call({
         to: nonCollisionableProxy.address,
-        data: retrieveCallData
+        data: retrieveCalldata
       })
       expect(BigNumber.from(value)).to.equal(otherValue)
     });
   });
 
   describe("Assembly Proxy", function () {
-    it("Should store and retrieve a value", async function () {
-      const { owner, assemblyProxy } = await loadFixture(deployStorageFixture);
-      let iface = new ethers.utils.Interface(Implementation.abi);
-      const storeCalldata = iface.encodeFunctionData("store", [otherValue])
+    it("Should store and retrieve correct value through proxy", async function () {
+      const { owner, assemblyProxy, storeCalldata, retrieveCalldata } = await loadFixture(deployStorageFixture);
       await owner.sendTransaction({
         to: assemblyProxy.address,
         data: storeCalldata
       })
-      const retrieveCallData = iface.encodeFunctionData("retrieve")
       const value = await owner.call({
         to: assemblyProxy.address,
-        data: retrieveCallData
+        data: retrieveCalldata
       })
       expect(BigNumber.from(value)).to.equal(otherValue)
     });
